@@ -1,50 +1,64 @@
 package com.mss.asistenciaapp.ui.components
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.mss.asistenciaapp.data.models.Trabajador
-import com.mss.asistenciaapp.data.network.ApiClient
 
 @Composable
 fun WorkerDropdown(
+    trabajadores: List<Trabajador>,
+    selectedText: String,
+    onTextChanged: (String) -> Unit,
     onWorkerSelected: (Trabajador) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
-    var trabajadores by remember { mutableStateOf(listOf<Trabajador>()) }
-    var selectedText by remember { mutableStateOf("") }
-    var isLoading by remember { mutableStateOf(true) }
+    var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    // Cargar los trabajadores desde el backend
-    LaunchedEffect(Unit) {
-        try {
-            isLoading = true
-            trabajadores = ApiClient.apiService.getTrabajadores()
-        } catch (e: Exception) {
-            errorMessage = "Error al cargar trabajadores: ${e.message}"
-        } finally {
-            isLoading = false
-        }
-    }
 
     Column(modifier = modifier) {
-        TextField(
-            value = selectedText,
-            onValueChange = { text ->
-                selectedText = text
-                expanded = true
-            },
-            label = { Text("Seleccionar trabajador") },
+        // Fila para el TextField y el icono "X"
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            isError = errorMessage != null
-        )
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TextField(
+                value = selectedText,
+                onValueChange = { text ->
+                    onTextChanged(text) // Actualiza el texto en el nivel superior
+                    expanded = true
+                },
+                label = { Text("Seleccionar trabajador") },
+                modifier = Modifier.weight(1f), // Esto asegura que el TextField ocupe el espacio disponible
+                isError = errorMessage != null
+            )
+
+            // Botón "X" para vaciar el texto
+            if (selectedText.isNotEmpty()) {
+                IconButton(
+                    onClick = {
+                        onTextChanged("") // Vaciar el texto
+                        expanded = false // Cerrar el dropdown si está abierto
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Clear,
+                        contentDescription = "Limpiar texto",
+                        tint = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
+                    )
+                }
+            }
+        }
 
         if (errorMessage != null) {
             Text(
@@ -55,7 +69,6 @@ fun WorkerDropdown(
         }
 
         if (isLoading) {
-            // Indicador de carga mientras se obtienen los datos
             CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
         } else {
             DropdownMenu(
@@ -67,8 +80,7 @@ fun WorkerDropdown(
                             it.apellidos.contains(selectedText, true)
                 }.forEach { trabajador ->
                     DropdownMenuItem(onClick = {
-                        selectedText = "${trabajador.nombres} ${trabajador.apellidos}"
-                        onWorkerSelected(trabajador)
+                        onWorkerSelected(trabajador) // Selecciona el trabajador
                         expanded = false
                     }) {
                         Text("${trabajador.nombres} ${trabajador.apellidos}")
@@ -78,3 +90,5 @@ fun WorkerDropdown(
         }
     }
 }
+
+

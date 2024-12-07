@@ -83,5 +83,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
     implementation("io.coil-kt:coil-compose:2.2.2")
 
+    
+
 
 }
