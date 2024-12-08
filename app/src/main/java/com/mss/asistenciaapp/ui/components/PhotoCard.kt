@@ -5,6 +5,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,10 +38,13 @@ fun PhotoCard(foto: Foto) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp)
-            .border(1.dp, Color.Gray, RoundedCornerShape(8.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
             .padding(8.dp)
     ) {
-        Text(text = "Fecha: ${foto.fecha}", style = MaterialTheme.typography.body1)
+        Text(
+            text = "Fecha: ${foto.fecha}",
+            style = MaterialTheme.typography.bodyLarge // Se usa la versión de Material 3
+        )
         Spacer(modifier = Modifier.height(8.dp))
         Image(
             painter = rememberAsyncImagePainter(File(foto.ruta).toUri()),

@@ -8,6 +8,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -66,7 +70,7 @@ fun AddAsistenciaScreen(navController: NavController) {
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            Text("Agregar Asistencia", style = MaterialTheme.typography.h5)
+            Text("Agregar Asistencia", style = MaterialTheme.typography.titleSmall)
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -90,7 +94,7 @@ fun AddAsistenciaScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(16.dp))
 
             // Fecha de asistencia
-            Text("Fecha: ${fechaAsistencia.toString()}", style = MaterialTheme.typography.body1)
+            Text("Fecha: ${fechaAsistencia.toString()}", style = MaterialTheme.typography.bodyLarge)
 
             Spacer(modifier = Modifier.height(16.dp))
 

@@ -1,17 +1,19 @@
 package com.mss.asistenciaapp.ui.components
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.*
+
+
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import com.mss.asistenciaapp.data.models.Trabajador
+
+import androidx.compose.material3.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.mss.asistenciaapp.data.models.Trabajador
 
 @Composable
 fun WorkerDropdown(
@@ -24,7 +26,6 @@ fun WorkerDropdown(
     var expanded by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-
 
     Column(modifier = modifier) {
         // Fila para el TextField y el icono "X"
@@ -54,7 +55,7 @@ fun WorkerDropdown(
                     Icon(
                         imageVector = Icons.Default.Clear,
                         contentDescription = "Limpiar texto",
-                        tint = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
                 }
             }
@@ -63,7 +64,7 @@ fun WorkerDropdown(
         if (errorMessage != null) {
             Text(
                 text = errorMessage ?: "Error desconocido",
-                color = MaterialTheme.colors.error,
+                color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(vertical = 8.dp)
             )
         }
@@ -79,16 +80,20 @@ fun WorkerDropdown(
                     it.nombres.contains(selectedText, true) ||
                             it.apellidos.contains(selectedText, true)
                 }.forEach { trabajador ->
-                    DropdownMenuItem(onClick = {
-                        onWorkerSelected(trabajador) // Selecciona el trabajador
-                        expanded = false
-                    }) {
-                        Text("${trabajador.nombres} ${trabajador.apellidos}")
-                    }
+                    DropdownMenuItem(
+                        onClick = {
+                            onWorkerSelected(trabajador) // Selecciona el trabajador
+                            expanded = false
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        text = { Text("${trabajador.nombres} ${trabajador.apellidos}") }
+                    )
                 }
             }
         }
     }
 }
+
+
 
 

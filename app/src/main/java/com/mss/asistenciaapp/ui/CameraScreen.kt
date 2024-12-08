@@ -2,17 +2,11 @@ package com.mss.asistenciaapp.ui
 
 import android.Manifest
 import android.content.Context
+import android.os.Build
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageCapture
-import androidx.camera.core.ImageCaptureException
-import androidx.camera.core.Preview
-import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,13 +15,22 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import androidx.navigation.NavController
 import java.io.File
-import android.view.Surface
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
 import androidx.lifecycle.LifecycleOwner
 import coil.compose.rememberImagePainter
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.Preview
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageCaptureException
 
+
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun CameraScreen(
     onPhotoTaken: (String) -> Unit
@@ -38,11 +41,7 @@ fun CameraScreen(
     val previewView = remember { PreviewView(context) }
     val imageCapture = remember { mutableStateOf<ImageCapture?>(null) }
     var cameraProvider: ProcessCameraProvider? = null
-
-    // Estado para controlar si la foto fue tomada
     var photoPath by remember { mutableStateOf<String?>(null) }
-
-    // Estado de permisos
     var permissionGranted by remember { mutableStateOf(false) }
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -54,25 +53,17 @@ fun CameraScreen(
 
     if (permissionGranted) {
         Box(modifier = Modifier.fillMaxSize()) {
-            // Mostrar la cámara
+            // Vista de la cámara
             AndroidView(
                 factory = { previewView },
                 modifier = Modifier.fillMaxSize()
             )
 
-            // Botón para capturar la foto
+            // Botón para capturar foto
             Button(
                 onClick = {
-                    if (photoPath == null) { // Solo permitir si no hay una foto activa
-                        Log.d("CameraScreen", "Iniciando captura de foto")
-                        capturePhoto(context, imageCapture.value) { filePath ->  // Usar imageCapture.value
-                            if (filePath != null) {
-                                Log.d("CameraScreen", "Foto capturada correctamente: $filePath")
-                                photoPath = filePath // Actualiza la ruta de la foto
-                            } else {
-                                Log.e("CameraScreen", "Error al capturar la foto")
-                            }
-                        }
+                    capturePhoto(context, imageCapture.value) { filePath ->
+                        photoPath = filePath
                     }
                 },
                 modifier = Modifier
@@ -82,19 +73,17 @@ fun CameraScreen(
                 Text("Capturar Foto")
             }
 
-            // Mostrar el modal si hay una foto capturada
+            // Mostrar foto capturada
             photoPath?.let {
                 PhotoCapturedDialog(
                     photoPath = it,
                     onSave = { path ->
-                        onPhotoTaken(path) // Guarda la foto
-                        photoPath = null // Limpia la ruta
-                        Log.d("CameraScreen", "Foto guardada y estado reiniciado")
+                        onPhotoTaken(path)
+                        photoPath = null
                     },
                     onDiscard = {
-                        photoPath = null // Descarta la foto y limpia el estado
+                        photoPath = null
                         restartCamera(context, previewView, lifecycleOwner, imageCapture)
-                        Log.d("CameraScreen", "Foto descartada y estado reiniciado")
                     }
                 )
             }
@@ -102,46 +91,31 @@ fun CameraScreen(
 
         // Configurar CameraX
         LaunchedEffect(Unit) {
-            try {
-                cameraProvider = cameraProviderFuture.get()
-                val preview = Preview.Builder().build()
-                preview.setSurfaceProvider(previewView.surfaceProvider)
+            cameraProvider = cameraProviderFuture.get()
+            val preview = Preview.Builder().build()
+            preview.setSurfaceProvider(previewView.surfaceProvider)
 
-                // Manejar la rotación de forma segura
-                val rotation = try {
-                    previewView.display?.rotation ?: Surface.ROTATION_0
-                } catch (e: Exception) {
-                    Log.e("CameraScreen", "Error obteniendo rotación de pantalla: ${e.message}")
-                    Surface.ROTATION_0
-                }
+            val imageCaptureBuilder = ImageCapture.Builder()
+            imageCapture.value = imageCaptureBuilder.build()
 
-                // Inicializa imageCapture
-                val newImageCapture = ImageCapture.Builder()
-                    .setTargetRotation(rotation) // Establecer rotación segura
-                    .build()
-
-                imageCapture.value = newImageCapture  // Asignar a la variable mutable
-
-                val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-                // Primero, liberar la cámara anterior
-                cameraProvider?.unbindAll()
-
-                // Ahora vincular los nuevos casos de uso
-                cameraProvider?.bindToLifecycle(
-                    lifecycleOwner,
-                    cameraSelector,
-                    preview,
-                    imageCapture.value  // Usar imageCapture.value
-                )
-            } catch (e: Exception) {
-                Log.e("CameraScreen", "Error al configurar la cámara: ${e.message}")
-            }
+            cameraProvider?.unbindAll()
+            cameraProvider?.bindToLifecycle(
+                lifecycleOwner,
+                CameraSelector.DEFAULT_BACK_CAMERA,
+                preview,
+                imageCapture.value
+            )
         }
     } else {
-        Text("Se necesita permiso para usar la cámara.", modifier = Modifier.fillMaxSize())
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("Se necesita permiso para usar la cámara.")
+        }
     }
 }
 
+/**
+ * Reinicia la cámara después de descartar la foto.
+ */
 private fun restartCamera(
     context: Context,
     previewView: PreviewView,
@@ -156,9 +130,7 @@ private fun restartCamera(
             setSurfaceProvider(previewView.surfaceProvider)
         }
 
-        val newImageCapture = ImageCapture.Builder()
-            .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
-            .build()
+        val newImageCapture = ImageCapture.Builder().build()
 
         try {
             cameraProvider.unbindAll()
@@ -168,16 +140,15 @@ private fun restartCamera(
                 preview,
                 newImageCapture
             )
-            imageCaptureState.value = newImageCapture  // Asignar el nuevo valor a imageCaptureState
+            imageCaptureState.value = newImageCapture
         } catch (e: Exception) {
             Log.e("CameraScreen", "Error al reiniciar la cámara: ${e.message}", e)
         }
     }, ContextCompat.getMainExecutor(context))
 }
 
-
 /**
- * Captura una foto usando CameraX y la guarda en el almacenamiento interno.
+ * Captura una foto usando CameraX y la guarda en almacenamiento interno.
  */
 private fun capturePhoto(
     context: Context,
@@ -189,34 +160,27 @@ private fun capturePhoto(
         return
     }
 
-    // Crear un archivo en el almacenamiento interno
-    val photoFile = File(
-        context.filesDir,
-        "photo_${System.currentTimeMillis()}.jpg" // Nombre único
-    )
-
+    val photoFile = File(context.filesDir, "photo_${System.currentTimeMillis()}.jpg")
     val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
 
-    // Capturar la foto
     imageCapture.takePicture(
         outputOptions,
         ContextCompat.getMainExecutor(context),
         object : ImageCapture.OnImageSavedCallback {
             override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                Log.d("CameraScreen", "Foto guardada en: ${photoFile.absolutePath}")
-                onPhotoSaved(photoFile.absolutePath) // Retorna la ruta del archivo guardado
+                onPhotoSaved(photoFile.absolutePath)
             }
 
             override fun onError(exception: ImageCaptureException) {
                 Log.e("CameraScreen", "Error al capturar la foto: ${exception.message}", exception)
-                onPhotoSaved(null) // Informa de un error
+                onPhotoSaved(null)
             }
         }
     )
 }
 
 /**
- * Dialog que muestra la foto tomada y permite al usuario elegir si la guarda o la descarta.
+ * Diálogo para manejar la foto capturada.
  */
 @Composable
 fun PhotoCapturedDialog(
@@ -224,8 +188,8 @@ fun PhotoCapturedDialog(
     onSave: (String) -> Unit,
     onDiscard: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = { /* No hacer nada al tocar fuera del cuadro de diálogo */ },
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = { },
         title = { Text("Foto tomada") },
         text = {
             Image(
@@ -235,21 +199,18 @@ fun PhotoCapturedDialog(
             )
         },
         confirmButton = {
-            Button(
-                onClick = { onSave(photoPath) }
-            ) {
+            androidx.compose.material3.Button(onClick = { onSave(photoPath) }) {
                 Text("Guardar")
             }
         },
         dismissButton = {
-            Button(
-                onClick = onDiscard
-            ) {
+            androidx.compose.material3.Button(onClick = onDiscard) {
                 Text("Descartar")
             }
         }
     )
 }
+
 
 
 
