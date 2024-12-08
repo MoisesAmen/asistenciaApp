@@ -14,15 +14,16 @@ import androidx.navigation.NavController
 import com.mss.asistenciaapp.data.models.Trabajador
 import com.mss.asistenciaapp.data.network.ApiClient
 import com.mss.asistenciaapp.ui.components.WorkerCard
+import androidx.compose.runtime.LaunchedEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VerTrabajadoresScreen(navController: NavController) {
-    var trabajadores by remember { mutableStateOf(listOf<Trabajador>()) }
+    var trabajadores by remember { mutableStateOf<List<Trabajador>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    // Cargar los trabajadores desde el backend
+    // Llamada a LaunchedEffect dentro de una función Composable
     LaunchedEffect(Unit) {
         try {
             isLoading = true
@@ -59,7 +60,6 @@ fun VerTrabajadoresScreen(navController: NavController) {
                         CircularProgressIndicator()
                     }
                 }
-
                 errorMessage != null -> {
                     // Mostrar mensaje de error si ocurre algún problema
                     Text(
@@ -68,7 +68,6 @@ fun VerTrabajadoresScreen(navController: NavController) {
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
-
                 else -> {
                     // Mostrar la lista de trabajadores
                     LazyColumn {
@@ -83,3 +82,7 @@ fun VerTrabajadoresScreen(navController: NavController) {
         }
     }
 }
+
+
+
+
